@@ -7,6 +7,7 @@
 #include<typeinfo>
 
 namespace lang{
+  class Accessor;
   class TypeManager{
     public:
       DEF_ENUM(Type,VOID,I8,I16,I32,I64,U8,U16,U32,U64,F32,F64,STRING,ARRAY,STRUCT,PTR,FCE,TYPEID);
@@ -44,6 +45,7 @@ namespace lang{
       unsigned computeTypeIdSize       (TypeID id);
 
       void*alloc(TypeID id);
+      Accessor allocAccessor(TypeID id);
 
       void argsToVector(std::vector<unsigned>&typeConfig,unsigned element){
         typeConfig.push_back(element);
@@ -87,19 +89,19 @@ namespace lang{
       TypeManager*  getManager();
       const void*         getData   ();
       TypeManager::TypeID getId     ();
-      Accessor access(unsigned elem);
-      char                   getI8     ();
-      short                  getI16    ();
-      int                    getI32    ();
-      long long int          getI64    ();
-      unsigned char          getU8     ();
-      unsigned short         getU16    ();
-      unsigned int           getU32    ();
-      unsigned long long int getU64    ();
+      Accessor operator[](unsigned elem);
+      unsigned getNofElements();
+      char                   &getI8     ();
+      short                  &getI16    ();
+      int                    &getI32    ();
+      long long int          &getI64    ();
+      unsigned char          &getU8     ();
+      unsigned short         &getU16    ();
+      unsigned int           &getU32    ();
+      unsigned long long int &getU64    ();
       float                  &getF32    ();
-      double                 getF64    ();
-      std::string            getString ();
-      void*                  getPointer();
-
+      double                 &getF64    ();
+      std::string            &getString ();
+      const void*             getPointer();
   };
 }

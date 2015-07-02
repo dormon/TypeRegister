@@ -404,6 +404,10 @@ void* TypeManager::alloc(TypeID id){
   return (void*)(new char[size]);
 }
 
+Accessor TypeManager::allocAccessor(TypeID id){
+  return Accessor(this,this->alloc(id),id);
+}
+
 Accessor::Accessor(TypeManager*manager,const void*data,TypeManager::TypeID id){
   this->_manager = manager;
   this->_data    = data   ;
@@ -419,7 +423,8 @@ TypeManager::TypeID Accessor::getId     (){
   return this->_id;
 }
 
-Accessor Accessor::access(unsigned elem){
+
+Accessor Accessor::operator[](unsigned elem){
   TypeManager::TypeID innerType = 0;
   unsigned            offset    = 0;
   switch(this->_id){
@@ -452,16 +457,45 @@ Accessor Accessor::access(unsigned elem){
       return Accessor(this->getManager(),this->getData(),this->getId());
   }
 }
-char                   Accessor::getI8     (){return*((char*)this->getData());}
-short                  Accessor::getI16    (){return*((short*)this->getData());}
-int                    Accessor::getI32    (){return*((int*)this->getData());}
-long long int          Accessor::getI64    (){return*((long long int          *)this->getData());}
-unsigned char          Accessor::getU8     (){return*((unsigned char          *)this->getData());}
-unsigned short         Accessor::getU16    (){return*((unsigned short         *)this->getData());}
-unsigned int           Accessor::getU32    (){return*((unsigned int           *)this->getData());}
-unsigned long long int Accessor::getU64    (){return*((unsigned long long int *)this->getData());}
+
+unsigned Accessor::getNofElements(){
+  switch(this->_id){
+    case TypeManager::VOID  :
+    case TypeManager::I8    :
+    case TypeManager::I16   :
+    case TypeManager::I32   :
+    case TypeManager::I64   :
+    case TypeManager::U8    :
+    case TypeManager::U16   :
+    case TypeManager::U32   :
+    case TypeManager::U64   :
+    case TypeManager::F32   :
+    case TypeManager::F64   :
+    case TypeManager::STRING:
+      return 0;
+    case TypeManager::ARRAY :
+      return this->getManager()->getArraySize(this->getId());
+    case TypeManager::STRUCT:
+      return this->getManager()->getNofStructElements(this->getId());
+    case TypeManager::PTR   :
+    case TypeManager::FCE   :
+    default:
+      return 0;
+  }
+}
+
+
+
+char                   &Accessor::getI8     (){return*((char*)this->getData());}
+short                  &Accessor::getI16    (){return*((short*)this->getData());}
+int                    &Accessor::getI32    (){return*((int*)this->getData());}
+long long int          &Accessor::getI64    (){return*((long long int          *)this->getData());}
+unsigned char          &Accessor::getU8     (){return*((unsigned char          *)this->getData());}
+unsigned short         &Accessor::getU16    (){return*((unsigned short         *)this->getData());}
+unsigned int           &Accessor::getU32    (){return*((unsigned int           *)this->getData());}
+unsigned long long int &Accessor::getU64    (){return*((unsigned long long int *)this->getData());}
 float                  &Accessor::getF32    (){return*((float                  *)this->getData());}
-double                 Accessor::getF64    (){return*((double                 *)this->getData());}
-std::string            Accessor::getString (){return*((std::string            *)this->getData());}
-void*                  Accessor::getPointer(){return (void*)this->getData();}
+double                 &Accessor::getF64    (){return*((double                 *)this->getData());}
+std::string            &Accessor::getString (){return*((std::string            *)this->getData());}
+const void*             Accessor::getPointer(){return (void*)this->getData();}
 
