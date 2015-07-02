@@ -408,6 +408,10 @@ Accessor TypeManager::allocAccessor(TypeID id){
   return Accessor(this,this->alloc(id),id);
 }
 
+Accessor TypeManager::allocAccessor(const char*name){
+  return this->allocAccessor(this->getTypeId(name));
+}
+
 Accessor::Accessor(TypeManager*manager,const void*data,TypeManager::TypeID id){
   this->_manager = manager;
   this->_data    = data   ;
@@ -427,7 +431,7 @@ TypeManager::TypeID Accessor::getId     (){
 Accessor Accessor::operator[](unsigned elem){
   TypeManager::TypeID innerType = 0;
   unsigned            offset    = 0;
-  switch(this->_id){
+  switch(this->getManager()->getTypeIdType(this->_id)){
     case TypeManager::VOID  :
     case TypeManager::I8    :
     case TypeManager::I16   :
@@ -484,18 +488,12 @@ unsigned Accessor::getNofElements(){
   }
 }
 
+void Accessor::free(){
+  delete[](char*)this->_data;
+  this->_data = NULL;
+  this->_id   = 0;
+}
 
+const void*Accessor::getPointer(){return (void*)this->getData();}
 
-char                   &Accessor::getI8     (){return*((char*)this->getData());}
-short                  &Accessor::getI16    (){return*((short*)this->getData());}
-int                    &Accessor::getI32    (){return*((int*)this->getData());}
-long long int          &Accessor::getI64    (){return*((long long int          *)this->getData());}
-unsigned char          &Accessor::getU8     (){return*((unsigned char          *)this->getData());}
-unsigned short         &Accessor::getU16    (){return*((unsigned short         *)this->getData());}
-unsigned int           &Accessor::getU32    (){return*((unsigned int           *)this->getData());}
-unsigned long long int &Accessor::getU64    (){return*((unsigned long long int *)this->getData());}
-float                  &Accessor::getF32    (){return*((float                  *)this->getData());}
-double                 &Accessor::getF64    (){return*((double                 *)this->getData());}
-std::string            &Accessor::getString (){return*((std::string            *)this->getData());}
-const void*             Accessor::getPointer(){return (void*)this->getData();}
 

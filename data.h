@@ -46,6 +46,7 @@ namespace lang{
 
       void*alloc(TypeID id);
       Accessor allocAccessor(TypeID id);
+      Accessor allocAccessor(const char*name);
 
       void argsToVector(std::vector<unsigned>&typeConfig,unsigned element){
         typeConfig.push_back(element);
@@ -91,17 +92,21 @@ namespace lang{
       TypeManager::TypeID getId     ();
       Accessor operator[](unsigned elem);
       unsigned getNofElements();
-      char                   &getI8     ();
-      short                  &getI16    ();
-      int                    &getI32    ();
-      long long int          &getI64    ();
-      unsigned char          &getU8     ();
-      unsigned short         &getU16    ();
-      unsigned int           &getU32    ();
-      unsigned long long int &getU64    ();
-      float                  &getF32    ();
-      double                 &getF64    ();
-      std::string            &getString ();
+      void     free();
+      template<typename T>
+        T&get(){
+          return *((T*)this->getData());
+        }
       const void*             getPointer();
+      template<typename T>
+        Accessor& operator=(const T&data){
+          this->get<T>()=data;
+          return *this;
+        }
+      
+      template<typename T>
+        operator T()const{
+          return ((Accessor*)this)->get<T>();
+        }
   };
 }
