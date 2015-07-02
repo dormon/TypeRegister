@@ -43,6 +43,8 @@ namespace lang{
       const char*getTypeIdName         (TypeID id);
       unsigned computeTypeIdSize       (TypeID id);
 
+      void*alloc(TypeID id);
+
       void argsToVector(std::vector<unsigned>&typeConfig,unsigned element){
         typeConfig.push_back(element);
       }
@@ -68,9 +70,36 @@ namespace lang{
           return this->addType(name,typeConfig);
         }
       TypeID addType(const char*name,std::vector<unsigned>&type);
+
       //unsigned getType(std::string name);
       //
       std::string toStr(TypeID id);
       std::string toStr();
+  };
+
+  class Accessor{
+    protected:
+      TypeManager*  _manager;
+      const void*         _data   ;
+      TypeManager::TypeID _id     ;
+    public:
+      Accessor(TypeManager*manager,const void*data,TypeManager::TypeID id);
+      TypeManager*  getManager();
+      const void*         getData   ();
+      TypeManager::TypeID getId     ();
+      Accessor access(unsigned elem);
+      char                   getI8     ();
+      short                  getI16    ();
+      int                    getI32    ();
+      long long int          getI64    ();
+      unsigned char          getU8     ();
+      unsigned short         getU16    ();
+      unsigned int           getU32    ();
+      unsigned long long int getU64    ();
+      float                  &getF32    ();
+      double                 getF64    ();
+      std::string            getString ();
+      void*                  getPointer();
+
   };
 }

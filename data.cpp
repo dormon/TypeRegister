@@ -394,7 +394,74 @@ unsigned TypeManager::computeTypeIdSize(TypeID id){
       std::cerr<<"the hell??"<<std::endl;
       return 0;
     default:
-      std::cerr<<"uta aus gerichtic himla!"<<std::endl;
+      std::cerr<<"uta aus aus gerichtic himla!"<<std::endl;
       return 0;
   }
 }
+
+void* TypeManager::alloc(TypeID id){
+  unsigned size=this->computeTypeIdSize(id);
+  return (void*)(new char[size]);
+}
+
+Accessor::Accessor(TypeManager*manager,const void*data,TypeManager::TypeID id){
+  this->_manager = manager;
+  this->_data    = data   ;
+  this->_id      = id     ;
+}
+TypeManager*  Accessor::getManager(){
+  return this->_manager;
+}
+const void*         Accessor::getData   (){
+  return this->_data;
+}
+TypeManager::TypeID Accessor::getId     (){
+  return this->_id;
+}
+
+Accessor Accessor::access(unsigned elem){
+  TypeManager::TypeID innerType = 0;
+  unsigned            offset    = 0;
+  switch(this->_id){
+    case TypeManager::VOID  :
+    case TypeManager::I8    :
+    case TypeManager::I16   :
+    case TypeManager::I32   :
+    case TypeManager::I64   :
+    case TypeManager::U8    :
+    case TypeManager::U16   :
+    case TypeManager::U32   :
+    case TypeManager::U64   :
+    case TypeManager::F32   :
+    case TypeManager::F64   :
+    case TypeManager::STRING:
+      return Accessor(this->getManager(),this->getData(),this->getId());
+    case TypeManager::ARRAY :
+      innerType = this->getManager()->getArrayInnerTypeId(this->getId());
+      offset    = this->getManager()->computeTypeIdSize(innerType)*elem;
+      return Accessor(this->getManager(),((char*)this->getData())+offset,innerType);
+    case TypeManager::STRUCT:
+      innerType = this->getManager()->getStructElementTypeId(this->getId(),elem);
+      for(unsigned i=0;i<elem;++i)
+        offset += this->getManager()->computeTypeIdSize(this->getManager()->getStructElementTypeId(this->getId(),i));
+      return Accessor(this->getManager(),((char*)this->getData())+offset,innerType);
+    case TypeManager::PTR   :
+      //? jit na pamet?
+    case TypeManager::FCE   :
+    default:
+      return Accessor(this->getManager(),this->getData(),this->getId());
+  }
+}
+char                   Accessor::getI8     (){return*((char*)this->getData());}
+short                  Accessor::getI16    (){return*((short*)this->getData());}
+int                    Accessor::getI32    (){return*((int*)this->getData());}
+long long int          Accessor::getI64    (){return*((long long int          *)this->getData());}
+unsigned char          Accessor::getU8     (){return*((unsigned char          *)this->getData());}
+unsigned short         Accessor::getU16    (){return*((unsigned short         *)this->getData());}
+unsigned int           Accessor::getU32    (){return*((unsigned int           *)this->getData());}
+unsigned long long int Accessor::getU64    (){return*((unsigned long long int *)this->getData());}
+float                  &Accessor::getF32    (){return*((float                  *)this->getData());}
+double                 Accessor::getF64    (){return*((double                 *)this->getData());}
+std::string            Accessor::getString (){return*((std::string            *)this->getData());}
+void*                  Accessor::getPointer(){return (void*)this->getData();}
+
