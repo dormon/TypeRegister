@@ -4,7 +4,6 @@
 
 using namespace lang;
 
-
 template<typename T>
 void printVec(std::vector<T>&data,unsigned from=0){
   for(unsigned i=from;i<data.size();++i)
@@ -22,7 +21,6 @@ std::string vec2str(std::vector<T>&data,unsigned from=0){
   ss<<"]";
   return ss.str();
 }
-
 
 TypeManager::TypeManager(){
   this->addType("void"  ,TypeManager::VOID  );
@@ -60,7 +58,6 @@ TypeManager::TypeManager(){
 
 TypeManager::TypeID TypeManager::getTypeId(const char*name){
   if(!this->_name2Id.count(name))std::cerr<<"name: "<<name<<"does not have TypeId"<<std::endl;
-  //std::cout<<"TypeManager::getTypeId("<<name<<")="<<this->_name2Id[name]<<std::endl;
   return this->_name2Id[name];
 }
 
@@ -155,61 +152,55 @@ unsigned TypeManager::getIndex(TypeID id){
 //
 unsigned TypeManager::getTypeDescriptionLength(TypeID id){
   unsigned index=this->getIndex(id);
-  unsigned a=this->_typeStart[index];
-  if(this->_typeStart.size()-1==index)return this->_types.size()-a;
-  return this->_typeStart[index+1]-a;
+  if(this->_typeStart.size()-1==index)return this->_types.size()-this->_typeStart[index];
+  return this->_typeStart[index+1]-this->_typeStart[index];
 }
+
 unsigned TypeManager::getTypeDescriptionElem  (TypeID id,unsigned i){
   return this->_types[this->_typeStart[this->getIndex(id)]+i];
 }
 
 TypeManager::Type TypeManager::getElementType(unsigned element){
-  if(element>=TYPEID)//this->getTypeIdType(element);
-  return TYPEID;
+  if(element>=TYPEID)return TYPEID;
   return (TypeManager::Type)element;
 }
 
 TypeManager::Type TypeManager::getTypeIdType(TypeID id){
-  unsigned element=this->getTypeDescriptionElem(id,0);
+  unsigned element=this->getTypeDescriptionElem(id,this->POSITION.TYPE);
   return this->getElementType(element);
 }
 
 unsigned TypeManager::getNofStructElements(TypeID id){
-  return this->getTypeDescriptionElem(id,1);
+  return this->getTypeDescriptionElem(id,this->POSITION.STRUCT.NOF_ELEMENTS);
 }
 
 TypeManager::TypeID TypeManager::getStructElementTypeId(TypeID id,unsigned element){
-  return this->getTypeDescriptionElem(id,2+element);
+  return this->getTypeDescriptionElem(id,this->POSITION.STRUCT.INNER_TYPES_START+element);
 }
 
 unsigned TypeManager::getArraySize(TypeID id){
-  return this->getTypeDescriptionElem(id,1);
+  return this->getTypeDescriptionElem(id,this->POSITION.ARRAY.SIZE);
 }
 
 TypeManager::TypeID TypeManager::getArrayInnerTypeId(TypeID id){
-  return this->getTypeDescriptionElem(id,2);
+  return this->getTypeDescriptionElem(id,this->POSITION.ARRAY.INNER_TYPE);
 }
 
 TypeManager::TypeID TypeManager::getPtrInnerTypeId(TypeID id){
-  return this->getTypeDescriptionElem(id,1);
+  return this->getTypeDescriptionElem(id,this->POSITION.PTR.INNER_TYPE);
 }
 
 TypeManager::TypeID TypeManager::getFceReturnTypeId(TypeID id){
-  return this->getTypeDescriptionElem(id,1);
+  return this->getTypeDescriptionElem(id,this->POSITION.FCE.RETURN_TYPE);
 }
 
 unsigned TypeManager::getNofFceArgs(TypeID id){
-  return this->getTypeDescriptionElem(id,2);
+  return this->getTypeDescriptionElem(id,this->POSITION.FCE.NOF_ARGUMENTS);
 }
 
 TypeManager::TypeID TypeManager::getFceArgTypeId(TypeID id,unsigned element){
-  return this->getTypeDescriptionElem(id,3+element);
+  return this->getTypeDescriptionElem(id,this->POSITION.FCE.ARGUMENTS_START+element);
 }
-
-/*
-   unsigned TypeManager::getStructElementType(unsigned typeId,unsigned element){
-
-   }*/
 
 bool TypeManager::_incrCheck(unsigned size,unsigned*start){
   (*start)++;
@@ -251,9 +242,9 @@ bool TypeManager::_typeExists(TypeID et,std::vector<unsigned>&type,unsigned*star
       if(et!=type[(*start)++])return falseBranch();
       return true;
     case TypeManager::ARRAY:
-      if(!this->_incrCheck(type.size(),start))return falseBranch();
-      if(this->getArraySize(et)!=type[*start])return falseBranch();
-      if(!this->_incrCheck(type.size(),start))return falseBranch();
+      if(!this->_incrCheck(type.size(),start))                        return falseBranch();
+      if(this->getArraySize(et)!=type[*start])                        return falseBranch();
+      if(!this->_incrCheck(type.size(),start))                        return falseBranch();
       if(!this->_typeExists(this->getArrayInnerTypeId(et),type,start))return falseBranch();
       return true;
     case TypeManager::STRUCT:
@@ -264,8 +255,9 @@ bool TypeManager::_typeExists(TypeID et,std::vector<unsigned>&type,unsigned*star
         if(!this->_typeExists(this->getStructElementTypeId(et,e),type,start))return falseBranch();
       return true;
     case TypeManager::PTR:
-      if(!this->_incrCheck(type.size(),start))return falseBranch();
+      if(!this->_incrCheck(type.size(),start))                      return falseBranch();
       if(!this->_typeExists(this->getPtrInnerTypeId(et),type,start))return falseBranch();
+      return true;
     case TypeManager::FCE:
       if(!this->_incrCheck(type.size(),start))                       return falseBranch();
       if(!this->_typeExists(this->getFceReturnTypeId(et),type,start))return falseBranch();
@@ -280,15 +272,11 @@ bool TypeManager::_typeExists(TypeID et,std::vector<unsigned>&type,unsigned*star
 }
 
 bool TypeManager::_typeExists(TypeManager::TypeID*id,std::vector<unsigned>&type,unsigned*start){
-  //std::cout<<"enter: "<<*start<<std::endl;
   for(unsigned t=0;t<this->getNofTypes();++t)
     if(this->_typeExists(this->getTypeId(t),type,start)){
       *id=this->getTypeId(t);
-      //std::cout<<"TypeManager::_typeExists("<<*id<<","<<vec2str(type)<<","<<*start<<")=true"<<std::endl;
       return true;
     }
-
-      //std::cout<<"TypeManager::_typeExists("<<*id<<","<<vec2str(type)<<","<<*start<<")=false"<<std::endl;
   return false;
 }
 
@@ -299,13 +287,10 @@ const char*TypeManager::getTypeIdName(TypeID id){
 
 TypeManager::TypeID TypeManager::_typeAdd(std::vector<unsigned>&type,unsigned*start){
   //std::cout<<"TypeManager::_typeAdd("<<vec2str(type)<<","<<*start<<")"<<std::endl;
-  //std::cerr<<"_typeAdd: ";
-  //printVec(type,*start);
   TypeManager::TypeID id;
   if(this->_typeExists(&id,type,start))return id;
   unsigned size=0;
   TypeManager::Type newType = this->getElementType(type[*start]);
-  //std::cout<<"->newType: "<<newType<<", "<<vec2str(type)<<" "<<*start<<std::endl;
   this->_typeStart.push_back(this->_types.size());
   this->_types.push_back(newType);//write type
   (*start)++;
@@ -325,8 +310,7 @@ TypeManager::TypeID TypeManager::_typeAdd(std::vector<unsigned>&type,unsigned*st
     case TypeManager::STRING:
       return this->getTypeId(this->getNofTypes()-1);
     case TypeManager::TYPEID:
-      std::cerr<<"new type is typeid that does not exists"<<std::endl;
-      //std::cout<<"new type TYPEID: "<<type[(*start)-1]<<std::endl;
+      std::cerr<<"new type is typeid = "<<type[(*start)-1]<<" that does not exists"<<std::endl;
       return type[(*start)-1];
     case TypeManager::ARRAY:
       this->_types.push_back(type[*start]);//write length
@@ -365,8 +349,6 @@ void TypeManager::_bindTypeIdName(TypeID id,const char*name){
 
 TypeManager::TypeID TypeManager::addType(const char*name,std::vector<unsigned>&type){
   //std::cout<<"TypeManager::addType("<<name<<","<<vec2str(type)<<")"<<std::endl;
-  //printVec(type);
-  //does this new type exists?
   for(unsigned t=0;t<this->getNofTypes();++t){
     unsigned start=0;
     if(this->_typeExists(this->getTypeId(t),type,&start)){
@@ -392,34 +374,29 @@ unsigned TypeManager::computeTypeIdSize(TypeID id){
   unsigned size=0;
   switch(type){
     case TypeManager::VOID  :return 0;
-    case TypeManager::I8    :return 1;
-    case TypeManager::I16   :return 2;
-    case TypeManager::I32   :return 4;
-    case TypeManager::I64   :return 8;
-    case TypeManager::U8    :return 1;
-    case TypeManager::U16   :return 2;
-    case TypeManager::U32   :return 4;
-    case TypeManager::U64   :return 8;
-    case TypeManager::F32   :return 4;
-    case TypeManager::F64   :return 8;
-    case TypeManager::STRING:
-      return sizeof(std::string);
+    case TypeManager::I8    :return sizeof(char              );
+    case TypeManager::I16   :return sizeof(short             );
+    case TypeManager::I32   :return sizeof(int               );
+    case TypeManager::I64   :return sizeof(long long int     );
+    case TypeManager::U8    :return sizeof(unsigned char     );
+    case TypeManager::U16   :return sizeof(unsigned short    );
+    case TypeManager::U32   :return sizeof(unsigned          );
+    case TypeManager::U64   :return sizeof(unsigned long long);
+    case TypeManager::F32   :return sizeof(float             );
+    case TypeManager::F64   :return sizeof(double            );
+    case TypeManager::STRING:return sizeof(std::string       );
+    case TypeManager::PTR   :return sizeof(void*             );
     case TypeManager::ARRAY:
       return this->getArraySize(id)*this->computeTypeIdSize(this->getArrayInnerTypeId(id));
     case TypeManager::STRUCT:
       for(unsigned e=0;e<this->getNofStructElements(id);++e)
         size+=this->computeTypeIdSize(this->getStructElementTypeId(id,e));
       return size;
-    case TypeManager::PTR:
-      return sizeof(void*);
     case TypeManager::FCE:
       size+=this->computeTypeIdSize(this->getFceReturnTypeId(id));
       for(unsigned e=0;e<this->getNofFceArgs(id);++e)
         size+=this->computeTypeIdSize(this->getFceArgTypeId(id,e));
       return size;
-    case TypeManager::TYPEID:
-      std::cerr<<"the hell??"<<std::endl;
-      return 0;
     default:
       std::cerr<<"uta aus aus gerichtic himla!"<<std::endl;
       return 0;
@@ -459,19 +436,6 @@ Accessor Accessor::operator[](unsigned elem){
   TypeManager::TypeID innerType = 0;
   unsigned            offset    = 0;
   switch(this->getManager()->getTypeIdType(this->_id)){
-    case TypeManager::VOID  :
-    case TypeManager::I8    :
-    case TypeManager::I16   :
-    case TypeManager::I32   :
-    case TypeManager::I64   :
-    case TypeManager::U8    :
-    case TypeManager::U16   :
-    case TypeManager::U32   :
-    case TypeManager::U64   :
-    case TypeManager::F32   :
-    case TypeManager::F64   :
-    case TypeManager::STRING:
-      return Accessor(this->getManager(),this->getData(),this->getId());
     case TypeManager::ARRAY :
       innerType = this->getManager()->getArrayInnerTypeId(this->getId());
       offset    = this->getManager()->computeTypeIdSize(innerType)*elem;
@@ -481,9 +445,6 @@ Accessor Accessor::operator[](unsigned elem){
       for(unsigned i=0;i<elem;++i)
         offset += this->getManager()->computeTypeIdSize(this->getManager()->getStructElementTypeId(this->getId(),i));
       return Accessor(this->getManager(),((char*)this->getData())+offset,innerType);
-    case TypeManager::PTR   :
-      //? jit na pamet?
-    case TypeManager::FCE   :
     default:
       return Accessor(this->getManager(),this->getData(),this->getId());
   }
@@ -491,26 +452,11 @@ Accessor Accessor::operator[](unsigned elem){
 
 unsigned Accessor::getNofElements(){
   switch(this->_id){
-    case TypeManager::VOID  :
-    case TypeManager::I8    :
-    case TypeManager::I16   :
-    case TypeManager::I32   :
-    case TypeManager::I64   :
-    case TypeManager::U8    :
-    case TypeManager::U16   :
-    case TypeManager::U32   :
-    case TypeManager::U64   :
-    case TypeManager::F32   :
-    case TypeManager::F64   :
-    case TypeManager::STRING:
-      return 0;
     case TypeManager::ARRAY :
       return this->getManager()->getArraySize(this->getId());
     case TypeManager::STRUCT:
       return this->getManager()->getNofStructElements(this->getId());
-    case TypeManager::PTR   :
-    case TypeManager::FCE   :
-    default:
+    default                 :
       return 0;
   }
 }
