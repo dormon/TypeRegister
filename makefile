@@ -1,6 +1,6 @@
 BIN      = typeRegistrator
 LIB      = -lgeCore
-CPPFLAGS = -std=c++1y -Wall -O3
+CPPFLAGS = -std=c++1y -Wall -O3 -g
 CPP      = g++
 OBJ      = main.o data.o
 

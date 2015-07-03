@@ -12,6 +12,16 @@ void printVec(std::vector<T>&data,unsigned from=0){
   std::cerr<<std::endl;
 }
 
+template<typename T>
+std::string vec2str(std::vector<T>&data,unsigned from=0){
+  std::stringstream ss;
+  ss<<"[";
+  if(from<data.size())ss<<data[from];
+  for(unsigned i=from+1;i<data.size();++i)
+    ss<<","<<data[i];
+  ss<<"]";
+  return ss.str();
+}
 
 
 TypeManager::TypeManager(){
@@ -49,6 +59,8 @@ TypeManager::TypeManager(){
 }
 
 TypeManager::TypeID TypeManager::getTypeId(const char*name){
+  if(!this->_name2Id.count(name))std::cerr<<"name: "<<name<<"does not have TypeId"<<std::endl;
+  //std::cout<<"TypeManager::getTypeId("<<name<<")="<<this->_name2Id[name]<<std::endl;
   return this->_name2Id[name];
 }
 
@@ -94,6 +106,9 @@ std::string TypeManager::toStr(TypeID id){
         if(e+1<this->getNofFceArgs(id))ss<<",";
       }
       ss<<")->"<<this->getTypeIdName(this->getFceReturnTypeId(id));
+      return ss.str();
+    case TypeManager::TYPEID:
+      //ss<<"asdasd: "<<id<<"#"<<this->getTypeIdName(id)<<"#";
       return ss.str();
     default:
       return "unknown";
@@ -202,6 +217,7 @@ bool TypeManager::_incrCheck(unsigned size,unsigned*start){
 }
 
 bool TypeManager::_typeExists(TypeID et,std::vector<unsigned>&type,unsigned*start){
+  //std::cout<<"TypeManager::_typeExists("<<et<<","<<vec2str(type)<<","<<*start<<")"<<std::endl;
   //std::cerr<<et<<" _typeExists: ";
   //printVec(type,*start);
   unsigned lastStart=*start;
@@ -232,12 +248,14 @@ bool TypeManager::_typeExists(TypeID et,std::vector<unsigned>&type,unsigned*star
       return true;
     case TypeManager::TYPEID:
       //std::cerr<<"et: "<<et<<", type[(*start)++]: "<<type[(*start)++]<<std::endl;
-      return et==type[(*start)++];
+      if(et!=type[(*start)++])return falseBranch();
+      return true;
     case TypeManager::ARRAY:
       if(!this->_incrCheck(type.size(),start))return falseBranch();
       if(this->getArraySize(et)!=type[*start])return falseBranch();
       if(!this->_incrCheck(type.size(),start))return falseBranch();
-      return this->_typeExists(this->getArrayInnerTypeId(et),type,start);
+      if(!this->_typeExists(this->getArrayInnerTypeId(et),type,start))return falseBranch();
+      return true;
     case TypeManager::STRUCT:
       if(!this->_incrCheck(type.size(),start))        return falseBranch();
       if(this->getNofStructElements(et)!=type[*start])return falseBranch();
@@ -247,7 +265,7 @@ bool TypeManager::_typeExists(TypeID et,std::vector<unsigned>&type,unsigned*star
       return true;
     case TypeManager::PTR:
       if(!this->_incrCheck(type.size(),start))return falseBranch();
-      return this->_typeExists(this->getPtrInnerTypeId(et),type,start);
+      if(!this->_typeExists(this->getPtrInnerTypeId(et),type,start))return falseBranch();
     case TypeManager::FCE:
       if(!this->_incrCheck(type.size(),start))                       return falseBranch();
       if(!this->_typeExists(this->getFceReturnTypeId(et),type,start))return falseBranch();
@@ -262,11 +280,15 @@ bool TypeManager::_typeExists(TypeID et,std::vector<unsigned>&type,unsigned*star
 }
 
 bool TypeManager::_typeExists(TypeManager::TypeID*id,std::vector<unsigned>&type,unsigned*start){
+  //std::cout<<"enter: "<<*start<<std::endl;
   for(unsigned t=0;t<this->getNofTypes();++t)
     if(this->_typeExists(this->getTypeId(t),type,start)){
       *id=this->getTypeId(t);
+      //std::cout<<"TypeManager::_typeExists("<<*id<<","<<vec2str(type)<<","<<*start<<")=true"<<std::endl;
       return true;
     }
+
+      //std::cout<<"TypeManager::_typeExists("<<*id<<","<<vec2str(type)<<","<<*start<<")=false"<<std::endl;
   return false;
 }
 
@@ -276,12 +298,14 @@ const char*TypeManager::getTypeIdName(TypeID id){
 }
 
 TypeManager::TypeID TypeManager::_typeAdd(std::vector<unsigned>&type,unsigned*start){
+  //std::cout<<"TypeManager::_typeAdd("<<vec2str(type)<<","<<*start<<")"<<std::endl;
   //std::cerr<<"_typeAdd: ";
   //printVec(type,*start);
   TypeManager::TypeID id;
   if(this->_typeExists(&id,type,start))return id;
   unsigned size=0;
   TypeManager::Type newType = this->getElementType(type[*start]);
+  //std::cout<<"->newType: "<<newType<<", "<<vec2str(type)<<" "<<*start<<std::endl;
   this->_typeStart.push_back(this->_types.size());
   this->_types.push_back(newType);//write type
   (*start)++;
@@ -302,7 +326,8 @@ TypeManager::TypeID TypeManager::_typeAdd(std::vector<unsigned>&type,unsigned*st
       return this->getTypeId(this->getNofTypes()-1);
     case TypeManager::TYPEID:
       std::cerr<<"new type is typeid that does not exists"<<std::endl;
-      return type[(*start)++];
+      //std::cout<<"new type TYPEID: "<<type[(*start)-1]<<std::endl;
+      return type[(*start)-1];
     case TypeManager::ARRAY:
       this->_types.push_back(type[*start]);//write length
       (*start)++;
@@ -333,11 +358,13 @@ TypeManager::TypeID TypeManager::_typeAdd(std::vector<unsigned>&type,unsigned*st
 }
 
 void TypeManager::_bindTypeIdName(TypeID id,const char*name){
+  //std::cout<<"TypeManager::_bindTypeIdName("<<id<<","<<name<<")"<<std::endl;
   this->_name2Id[name] = id  ;
   this->_id2name[id  ] = name;
 }
 
 TypeManager::TypeID TypeManager::addType(const char*name,std::vector<unsigned>&type){
+  //std::cout<<"TypeManager::addType("<<name<<","<<vec2str(type)<<")"<<std::endl;
   //printVec(type);
   //does this new type exists?
   for(unsigned t=0;t<this->getNofTypes();++t){
