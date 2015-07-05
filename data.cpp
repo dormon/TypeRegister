@@ -35,25 +35,6 @@ TypeManager::TypeManager(){
   this->addType("float" ,TypeManager::F32   );
   this->addType("double",TypeManager::F64   );
   this->addType("string",TypeManager::STRING);
-  this->addType("float3",
-      TypeManager::ARRAY,
-      3,
-      TypeManager::F32);
-  this->addType("vagon",
-      TypeManager::STRUCT,
-      3       ,
-      "float3" ,
-      "int32",
-      "uint32"  );
-  this->addType("uint32*",
-      TypeManager::PTR,
-      TypeManager::U32);
-  this->addType("fce2f",
-      TypeManager::FCE,
-      "float",
-      2,
-      "float",
-      "float");
 }
 
 TypeManager::TypeID TypeManager::getTypeId(const char*name){
@@ -137,19 +118,7 @@ TypeManager::TypeID TypeManager::getTypeId(unsigned index){
 unsigned TypeManager::getIndex(TypeID id){
   return id-TypeManager::TYPEID;
 }
-//0 VOID
-//1 INT
-//2 UINT
-//3 FLOAT
-//4 STRING
-//5 Size T ARRAY
-//6 Size T T T ... STRUCT
-//7 T PTR
-//8 T Size T .... FCE
-//
-//
-//
-//
+
 unsigned TypeManager::getTypeDescriptionLength(TypeID id){
   unsigned index=this->getIndex(id);
   if(this->_typeStart.size()-1==index)return this->_types.size()-this->_typeStart[index];
@@ -209,12 +178,9 @@ bool TypeManager::_incrCheck(unsigned size,unsigned*start){
 
 bool TypeManager::_typeExists(TypeID et,std::vector<unsigned>&type,unsigned*start){
   //std::cout<<"TypeManager::_typeExists("<<et<<","<<vec2str(type)<<","<<*start<<")"<<std::endl;
-  //std::cerr<<et<<" _typeExists: ";
-  //printVec(type,*start);
   unsigned lastStart=*start;
   auto falseBranch=[&start,&lastStart](){*start=lastStart;return false;};
   if(*start>=type.size())return falseBranch();
-  //std::cerr<<this->getTypeIdType(et)<<" - "<<this->getElementType(type[*start])<<std::endl;
   if(this->getElementType(type[*start])==TypeManager::TYPEID){
     if(et==type[*start]){
       (*start)++;
@@ -421,16 +387,9 @@ Accessor::Accessor(TypeManager*manager,const void*data,TypeManager::TypeID id){
   this->_data    = data   ;
   this->_id      = id     ;
 }
-TypeManager*  Accessor::getManager(){
-  return this->_manager;
-}
-const void*         Accessor::getData   (){
-  return this->_data;
-}
-TypeManager::TypeID Accessor::getId     (){
-  return this->_id;
-}
-
+TypeManager*        Accessor::getManager(){return this->_manager;}
+const void*         Accessor::getData   (){return this->_data   ;}
+TypeManager::TypeID Accessor::getId     (){return this->_id     ;}
 
 Accessor Accessor::operator[](unsigned elem){
   TypeManager::TypeID innerType = 0;
