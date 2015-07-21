@@ -4,6 +4,7 @@
 #include<iostream>
 #include<vector>
 #include<map>
+#include<set>
 #include<typeinfo>
 
 namespace lang{
@@ -37,6 +38,7 @@ namespace lang{
       std::vector<unsigned>       _types    ;
       std::map<const char*,TypeID>_name2Id  ;
       std::map<TypeID,const char*>_id2name  ;
+      std::map<TypeID,std::set<const char*>>_id2Synonyms;
       bool   _typeExists(TypeID et,std::vector<unsigned>&type,unsigned*start);
       bool   _typeExists(TypeID*et,std::vector<unsigned>&type,unsigned*start);
       TypeID _typeAdd(std::vector<unsigned>&type,unsigned*start);
@@ -79,6 +81,9 @@ namespace lang{
       TypeID     getFceArgTypeId         (TypeID id,unsigned element);
       TypeID     getTypeId               (const char*name);
       const char*getTypeIdName           (TypeID id);
+      std::set<const char*>&getTypeIdSynonyms(TypeID id);
+      bool                  hasSynonyms      (TypeID id);
+      bool                  areSynonyms      (const char*name0,const char*name1);
       unsigned   computeTypeIdSize       (TypeID id);
 
       void*alloc(TypeID id);

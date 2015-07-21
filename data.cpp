@@ -250,6 +250,15 @@ const char*TypeManager::getTypeIdName(TypeID id){
   if(!this->_id2name.count(id))return"";
   return this->_id2name[id];
 }
+std::set<const char*>&TypeManager::getTypeIdSynonyms(TypeID id){
+  return this->_id2Synonyms[id];
+}
+bool                  TypeManager::hasSynonyms      (TypeID id){
+  return this->_id2Synonyms[id].size()>1;
+}
+bool                  TypeManager::areSynonyms      (const char*name0,const char*name1){
+  return this->getTypeId(name0)==this->getTypeId(name1);
+}
 
 TypeManager::TypeID TypeManager::_typeAdd(std::vector<unsigned>&type,unsigned*start){
   //std::cout<<"TypeManager::_typeAdd("<<vec2str(type)<<","<<*start<<")"<<std::endl;
@@ -310,7 +319,9 @@ TypeManager::TypeID TypeManager::_typeAdd(std::vector<unsigned>&type,unsigned*st
 void TypeManager::_bindTypeIdName(TypeID id,const char*name){
   //std::cout<<"TypeManager::_bindTypeIdName("<<id<<","<<name<<")"<<std::endl;
   this->_name2Id[name] = id  ;
-  this->_id2name[id  ] = name;
+  if(!this->_id2name.count(id))
+    this->_id2name[id  ] = name;
+  this->_id2Synonyms[id].insert(name);
 }
 
 TypeManager::TypeID TypeManager::addType(const char*name,std::vector<unsigned>&type){
@@ -331,6 +342,7 @@ TypeManager::TypeID TypeManager::addType(const char*name,std::vector<unsigned>&t
   TypeID newTypeId=this->_typeAdd(type,&start);
   if(std::strcmp(name,"")){
     this->_bindTypeIdName(newTypeId,name);
+    return newTypeId;
   }
   return 0;
 }
@@ -353,19 +365,19 @@ unsigned TypeManager::computeTypeIdSize(TypeID id){
     case TypeManager::STRING:return sizeof(std::string       );
     case TypeManager::PTR   :return sizeof(void*             );
     case TypeManager::ARRAY:
-      return this->getArraySize(id)*this->computeTypeIdSize(this->getArrayInnerTypeId(id));
+                             return this->getArraySize(id)*this->computeTypeIdSize(this->getArrayInnerTypeId(id));
     case TypeManager::STRUCT:
-      for(unsigned e=0;e<this->getNofStructElements(id);++e)
-        size+=this->computeTypeIdSize(this->getStructElementTypeId(id,e));
-      return size;
+                             for(unsigned e=0;e<this->getNofStructElements(id);++e)
+                               size+=this->computeTypeIdSize(this->getStructElementTypeId(id,e));
+                             return size;
     case TypeManager::FCE:
-      size+=this->computeTypeIdSize(this->getFceReturnTypeId(id));
-      for(unsigned e=0;e<this->getNofFceArgs(id);++e)
-        size+=this->computeTypeIdSize(this->getFceArgTypeId(id,e));
-      return size;
+                             size+=this->computeTypeIdSize(this->getFceReturnTypeId(id));
+                             for(unsigned e=0;e<this->getNofFceArgs(id);++e)
+                               size+=this->computeTypeIdSize(this->getFceArgTypeId(id,e));
+                             return size;
     default:
-      std::cerr<<"uta aus aus gerichtic himla!"<<std::endl;
-      return 0;
+                             std::cerr<<"uta aus aus gerichtic himla!"<<std::endl;
+                             return 0;
   }
 }
 
