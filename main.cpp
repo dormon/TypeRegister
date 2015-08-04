@@ -35,9 +35,10 @@ int main(){
   lang::TypeManager*manager=new lang::TypeManager();
   manager->addType("float4"  ,lang::TypeManager::ARRAY,4,"float" );
   manager->addType("float4x4",lang::TypeManager::ARRAY,4,"float4");
-  manager->addType("mat4",lang::TypeManager::ARRAY,4,"float4");
-  manager->addType("shader",lang::TypeManager::OBJ,(unsigned)sizeof(Shader));
-  manager->addType("shader*",lang::TypeManager::OBJ,(unsigned)sizeof(Shader*));
+  manager->addType("mat4"    ,lang::TypeManager::ARRAY,4,"float4");
+  manager->addType("shader"  ,lang::TypeManager::OBJ,(unsigned)sizeof(Shader));
+  manager->addType("shader*" ,lang::TypeManager::OBJ,(unsigned)sizeof(Shader*));
+  manager->addType("DIFFUSE" ,lang::TypeManager::OBJ,0);
   std::cerr<<manager->toStr()<<std::endl;
 
 
@@ -64,6 +65,9 @@ int main(){
   shad.id=17;
   std::cout<<((Shader*)psc)->id<<std::endl;
   psc.free();
+
+  lang::Accessor ec=manager->allocAccessor("DIFFUSE");
+  ec.free();
 
   delete manager;
 

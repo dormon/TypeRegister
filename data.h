@@ -113,8 +113,8 @@ namespace lang{
       TypeManager::TypeID _id     ;
     public:
       Accessor(TypeManager*manager,const void*data,TypeManager::TypeID id);
-      TypeManager*        getManager();
-      void*         getData   ();
+      TypeManager* getManager();
+      void*        getData   ();
       TypeManager::TypeID getId     ();
       Accessor operator[](unsigned elem);
       unsigned getNofElements();
@@ -126,31 +126,8 @@ namespace lang{
           return *this;
         }
       template<typename T>
-        &operator T&()/*const*/{
+        &operator T&(){
           return *((T*)((Accessor*)this)->getData());
         }
-   
-      /*
-      template<typename T>
-        T& operator*(){
-          return *((T*)((Accessor*)this)->getData());
-        }
-      operator void*(){
-        return this->getData();
-      }*/
-      /*
-      template<typename T>
-      explicit operator T(){
-        return T(this->getData());
-      }*/
-
-
-      /*
-      template<typename T>
-        operator T*()const{
-          return ((T*)((Accessor*)this)->getData());
-        }
-      */
-
   };
 }
