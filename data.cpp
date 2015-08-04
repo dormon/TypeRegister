@@ -38,7 +38,7 @@ TypeManager::TypeManager(){
 }
 
 TypeManager::TypeID TypeManager::getTypeId(const char*name){
-  if(!this->_name2Id.count(name))std::cerr<<"name: "<<name<<"does not have TypeId"<<std::endl;
+  if(!this->_name2Id.count(name))std::cerr<<"name: "<<name<<" does not have TypeId"<<std::endl;
   return this->_name2Id[name];
 }
 
@@ -84,6 +84,9 @@ std::string TypeManager::toStr(TypeID id){
         if(e+1<this->getNofFceArgs(id))ss<<",";
       }
       ss<<")->"<<this->getTypeIdName(this->getFceReturnTypeId(id));
+      return ss.str();
+    case TypeManager::OBJ:
+      ss<<"class "<<this->getTypeIdName(id);
       return ss.str();
     case TypeManager::TYPEID:
       //ss<<"asdasd: "<<id<<"#"<<this->getTypeIdName(id)<<"#";
@@ -171,6 +174,10 @@ TypeManager::TypeID TypeManager::getFceArgTypeId(TypeID id,unsigned element){
   return this->getTypeDescriptionElem(id,this->POSITION.FCE.ARGUMENTS_START+element);
 }
 
+unsigned TypeManager::getObjSize(TypeID id){
+  return this->getTypeDescriptionElem(id,this->POSITION.OBJ.SIZE);
+}
+
 bool TypeManager::_incrCheck(unsigned size,unsigned*start){
   (*start)++;
   return *start<size;
@@ -232,6 +239,8 @@ bool TypeManager::_typeExists(TypeID et,std::vector<unsigned>&type,unsigned*star
       for(unsigned e=0;e<this->getNofFceArgs(et);++e)
         if(!this->_typeExists(this->getFceArgTypeId(et,e),type,start))return falseBranch();
       return true;
+    case TypeManager::OBJ:
+      return falseBranch();
     default:
       return falseBranch();
   }
@@ -310,6 +319,11 @@ TypeManager::TypeID TypeManager::_typeAdd(std::vector<unsigned>&type,unsigned*st
       for(unsigned e=0;e<size;++e)//write args
         this->_types.push_back(this->_typeAdd(type,start));
       return this->getTypeId(this->getNofTypes()-1);
+    case TypeManager::OBJ:
+      size=type[*start];
+      this->_types.push_back(size);//write size
+      (*start)++;
+      return this->getTypeId(this->getNofTypes()-1);
     default:
       std::cerr<<"what a stupid day..."<<std::endl;
       return TypeManager::VOID;
@@ -375,6 +389,8 @@ unsigned TypeManager::computeTypeIdSize(TypeID id){
                              for(unsigned e=0;e<this->getNofFceArgs(id);++e)
                                size+=this->computeTypeIdSize(this->getFceArgTypeId(id,e));
                              return size;
+    case TypeManager::OBJ:
+                             return this->getObjSize(id);
     default:
                              std::cerr<<"uta aus aus gerichtic himla!"<<std::endl;
                              return 0;
@@ -395,12 +411,12 @@ Accessor TypeManager::allocAccessor(const char*name){
 }
 
 Accessor::Accessor(TypeManager*manager,const void*data,TypeManager::TypeID id){
-  this->_manager = manager;
-  this->_data    = data   ;
-  this->_id      = id     ;
+  this->_manager =        manager;
+  this->_data    = (void*)data   ;
+  this->_id      =        id     ;
 }
 TypeManager*        Accessor::getManager(){return this->_manager;}
-const void*         Accessor::getData   (){return this->_data   ;}
+void*               Accessor::getData   (){return this->_data   ;}
 TypeManager::TypeID Accessor::getId     (){return this->_id     ;}
 
 Accessor Accessor::operator[](unsigned elem){

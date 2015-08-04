@@ -11,27 +11,30 @@ namespace lang{
   class Accessor;
   class TypeManager{
     public:
-      DEF_ENUM(Type,VOID,I8,I16,I32,I64,U8,U16,U32,U64,F32,F64,STRING,ARRAY,STRUCT,PTR,FCE,TYPEID);
+      DEF_ENUM(Type,VOID,I8,I16,I32,I64,U8,U16,U32,U64,F32,F64,STRING,ARRAY,STRUCT,PTR,FCE,OBJ,TYPEID);
       typedef unsigned TypeID;
     protected:
       struct{
-        static const unsigned TYPE = 0;
+        static const unsigned TYPE = 0u;
         struct{
-          static const unsigned SIZE       = 1;
-          static const unsigned INNER_TYPE = 2;
+          static const unsigned SIZE       = 1u;
+          static const unsigned INNER_TYPE = 2u;
         }static const ARRAY;
         struct{
-          static const unsigned NOF_ELEMENTS      = 1;
-          static const unsigned INNER_TYPES_START = 2;
+          static const unsigned NOF_ELEMENTS      = 1u;
+          static const unsigned INNER_TYPES_START = 2u;
         }static const STRUCT;
         struct{
-          static const unsigned INNER_TYPE = 1;
+          static const unsigned INNER_TYPE = 1u;
         }static const PTR;
         struct{
-          static const unsigned RETURN_TYPE     = 1;
-          static const unsigned NOF_ARGUMENTS   = 2;
-          static const unsigned ARGUMENTS_START = 3;
+          static const unsigned RETURN_TYPE     = 1u;
+          static const unsigned NOF_ARGUMENTS   = 2u;
+          static const unsigned ARGUMENTS_START = 3u;
         }static const FCE;
+        struct{
+          static const unsigned SIZE = 1u;
+        }static const OBJ;
       }static const POSITION;
 
       std::vector<unsigned>       _typeStart;
@@ -79,6 +82,7 @@ namespace lang{
       TypeID     getFceReturnTypeId      (TypeID id);
       unsigned   getNofFceArgs           (TypeID id);
       TypeID     getFceArgTypeId         (TypeID id,unsigned element);
+      unsigned   getObjSize              (TypeID id);
       TypeID     getTypeId               (const char*name);
       const char*getTypeIdName           (TypeID id);
       std::set<const char*>&getTypeIdSynonyms(TypeID id);
@@ -105,12 +109,12 @@ namespace lang{
   class Accessor{
     protected:
       TypeManager*        _manager;
-      const void*         _data   ;
+      void*               _data   ;
       TypeManager::TypeID _id     ;
     public:
       Accessor(TypeManager*manager,const void*data,TypeManager::TypeID id);
       TypeManager*        getManager();
-      const void*         getData   ();
+      void*         getData   ();
       TypeManager::TypeID getId     ();
       Accessor operator[](unsigned elem);
       unsigned getNofElements();
@@ -122,8 +126,31 @@ namespace lang{
           return *this;
         }
       template<typename T>
-        operator T()const{
+        &operator T&()/*const*/{
           return *((T*)((Accessor*)this)->getData());
         }
+   
+      /*
+      template<typename T>
+        T& operator*(){
+          return *((T*)((Accessor*)this)->getData());
+        }
+      operator void*(){
+        return this->getData();
+      }*/
+      /*
+      template<typename T>
+      explicit operator T(){
+        return T(this->getData());
+      }*/
+
+
+      /*
+      template<typename T>
+        operator T*()const{
+          return ((T*)((Accessor*)this)->getData());
+        }
+      */
+
   };
 }
